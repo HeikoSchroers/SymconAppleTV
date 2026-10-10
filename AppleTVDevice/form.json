@@ -35,11 +35,27 @@
         },
         {
             "type": "ExpansionPanel",
-            "caption": "App-Schalter (z. B. für die HomeKit-Bridge)",
+            "caption": "App-Schalter (z. B. für die Visualisierung und die HomeKit-Bridge)",
             "items": [
                 {
                     "type": "Label",
-                    "caption": "Jede angekreuzte App bekommt eine eigene Schalter-Variable: Ein startet die App (weckt das Apple TV vorher), Aus schickt es in den Ruhezustand."
+                    "caption": "Eine App mit Schalter bekommt eine eigene Schalter-Variable: Ein startet die App (weckt das Apple TV vorher, ein Bildschirmschoner endet), Aus schickt es in den Ruhezustand."
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "AllAppSwitches",
+                    "caption": "Schalter für jede installierte App (neue Apps bekommen ihn von selbst)"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "AppListInterval",
+                    "caption": "App-Liste neu laden alle",
+                    "suffix": "Stunden, nur bei wachem Apple TV (0 = nur von Hand)",
+                    "minimum": 0
+                },
+                {
+                    "type": "Label",
+                    "caption": "Ist eine App nicht mehr installiert, wird ihr Schalter versteckt, nicht gelöscht. In der Liste angekreuzte Apps bekommen auch ohne die Option oben einen Schalter."
                 },
                 {
                     "type": "List",
