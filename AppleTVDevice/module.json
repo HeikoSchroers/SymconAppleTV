@@ -1,0 +1,12 @@
+{
+    "id": "{87420B13-61AC-46AB-8AE8-911160F32543}",
+    "name": "Apple TV Device",
+    "type": 3,
+    "vendor": "Apple",
+    "aliases": ["Apple TV", "Apple TV 4K", "Apple TV HD"],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "ATV",
+    "url": "https://github.com/HeikoSchroers/SymconAppleTV"
+}

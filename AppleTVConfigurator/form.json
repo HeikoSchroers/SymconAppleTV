@@ -1,0 +1,49 @@
+{
+    "elements": [
+        {
+            "type": "NumberSpinner",
+            "name": "SearchTime",
+            "caption": "Suchdauer",
+            "suffix": "Sekunden",
+            "minimum": 1,
+            "maximum": 10
+        },
+        {
+            "type": "Label",
+            "caption": "Gesucht wird per mDNS (Bonjour). Steht Symcon in einem anderen Netz als das Apple TV, muss der Router mDNS weiterreichen."
+        }
+    ],
+    "actions": [
+        {
+            "type": "Configurator",
+            "name": "Devices",
+            "caption": "Apple TVs",
+            "rowCount": 10,
+            "add": false,
+            "delete": true,
+            "sort": {
+                "column": "name",
+                "direction": "ascending"
+            },
+            "columns": [
+                {
+                    "caption": "Name",
+                    "name": "name",
+                    "width": "auto"
+                },
+                {
+                    "caption": "Modell",
+                    "name": "model",
+                    "width": "250px"
+                },
+                {
+                    "caption": "Adresse",
+                    "name": "address",
+                    "width": "200px"
+                }
+            ],
+            "values": []
+        }
+    ],
+    "status": []
+}

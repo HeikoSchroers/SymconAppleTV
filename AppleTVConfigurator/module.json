@@ -1,0 +1,12 @@
+{
+    "id": "{2B08195D-953C-45F0-87DB-29FA4359E5A3}",
+    "name": "Apple TV Configurator",
+    "type": 4,
+    "vendor": "Apple",
+    "aliases": ["Apple TV Konfigurator", "Apple TV Suche"],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "ATVC",
+    "url": "https://github.com/HeikoSchroers/SymconAppleTV"
+}

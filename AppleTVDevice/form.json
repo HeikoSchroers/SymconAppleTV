@@ -1,0 +1,171 @@
+{
+    "elements": [
+        {
+            "type": "ValidationTextBox",
+            "name": "Host",
+            "caption": "Adresse (IP oder Name)"
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "Port",
+            "caption": "Port (Companion)",
+            "minimum": 1,
+            "maximum": 65535
+        },
+        {
+            "type": "ValidationTextBox",
+            "name": "DeviceName",
+            "caption": "Gerätename (wie in den Einstellungen des Apple TV)"
+        },
+        {
+            "type": "Label",
+            "caption": "Antwortet die Adresse nicht (z. B. nach einem DHCP-Wechsel), sucht die Instanz das Apple TV über den Gerätenamen per mDNS."
+        },
+        {
+            "type": "ValidationTextBox",
+            "name": "ClientName",
+            "caption": "Name dieser Fernbedienung auf dem Apple TV"
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "Interval",
+            "caption": "Zustand abfragen alle",
+            "suffix": "Sekunden (0 = aus)",
+            "minimum": 0
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "App-Schalter (z. B. für die HomeKit-Bridge)",
+            "items": [
+                {
+                    "type": "Label",
+                    "caption": "Jede angekreuzte App bekommt eine eigene Schalter-Variable: Ein startet die App (weckt das Apple TV vorher), Aus schickt es in den Ruhezustand."
+                },
+                {
+                    "type": "List",
+                    "name": "AppSwitches",
+                    "caption": "Apps",
+                    "rowCount": 12,
+                    "add": false,
+                    "delete": false,
+                    "sort": {
+                        "column": "Name",
+                        "direction": "ascending"
+                    },
+                    "columns": [
+                        {
+                            "caption": "App",
+                            "name": "Name",
+                            "width": "auto",
+                            "add": ""
+                        },
+                        {
+                            "caption": "Kennung",
+                            "name": "Bundle",
+                            "width": "320px",
+                            "add": ""
+                        },
+                        {
+                            "caption": "Schalter",
+                            "name": "Switch",
+                            "width": "100px",
+                            "add": false,
+                            "edit": {
+                                "type": "CheckBox"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "type": "ExpansionPanel",
+            "caption": "Kopplung",
+            "expanded": true,
+            "items": [
+                {
+                    "type": "Label",
+                    "name": "PairingInfo",
+                    "caption": ""
+                },
+                {
+                    "type": "Button",
+                    "caption": "Koppeln",
+                    "onClick": "ATV_StartPairing($id);"
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "ValidationTextBox",
+                            "name": "PIN",
+                            "caption": "PIN vom Fernseher",
+                            "validate": "^[0-9]{4}$"
+                        },
+                        {
+                            "type": "Button",
+                            "caption": "PIN senden",
+                            "onClick": "ATV_SubmitPin($id, $PIN);"
+                        }
+                    ]
+                },
+                {
+                    "type": "Button",
+                    "caption": "Kopplung löschen",
+                    "onClick": "ATV_Unpair($id);",
+                    "confirm": "Kopplung in dieser Instanz löschen? Danach muss neu gekoppelt werden."
+                }
+            ]
+        },
+        {
+            "type": "Label",
+            "name": "FoundAddress",
+            "caption": "",
+            "visible": false
+        },
+        {
+            "type": "RowLayout",
+            "items": [
+                {
+                    "type": "Button",
+                    "caption": "Zustand abfragen",
+                    "onClick": "echo ['unbekannt', 'Ruhezustand', 'Bildschirmschoner', 'wach', 'untätig'][ATV_GetState($id)];"
+                },
+                {
+                    "type": "Button",
+                    "caption": "Einschalten",
+                    "onClick": "ATV_PowerOn($id);"
+                },
+                {
+                    "type": "Button",
+                    "caption": "Ruhezustand",
+                    "onClick": "ATV_PowerOff($id);"
+                },
+                {
+                    "type": "Button",
+                    "caption": "App-Liste neu laden",
+                    "onClick": "echo count(ATV_GetApps($id)) . ' Apps';"
+                }
+            ]
+        }
+    ],
+    "status": [
+        {
+            "code": 201,
+            "icon": "inactive",
+            "caption": "Nicht gekoppelt – unten im Formular koppeln"
+        },
+        {
+            "code": 202,
+            "icon": "error",
+            "caption": "Apple TV nicht erreichbar"
+        },
+        {
+            "code": 203,
+            "icon": "error",
+            "caption": "Kopplung abgelehnt – neu koppeln"
+        }
+    ]
+}
