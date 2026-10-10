@@ -83,7 +83,7 @@ Apple TV in den Ruhezustand, setzt die Abfrage beides zurück.
 
 | Funktion | Bedeutung |
 |---|---|
-| `ATV_PowerOn($id)` | aufwecken |
+| `ATV_PowerOn($id)` | aufwecken; ein laufender Bildschirmschoner wird beendet |
 | `ATV_PowerOff($id)` | Ruhezustand |
 | `ATV_GetState($id)` | 1 Ruhezustand, 2 Bildschirmschoner, 3 wach, 4 untätig, 0 unbekannt |
 | `ATV_LaunchApp($id, 'com.netflix.Netflix')` | App starten (weckt vorher); eine URL öffnet einen Link |
@@ -107,6 +107,9 @@ Instanz.
   oder IR-Lernfunktion).
 - Der Ruhezustand des Apple TV schaltet über HDMI-CEC meist auch den
   Fernseher aus, das Aufwecken ihn ein. Das hängt am Fernseher.
+- Das reine Aufwecken lässt einen laufenden Bildschirmschoner stehen.
+  `ATV_PowerOn` drückt deshalb in diesem Fall zusätzlich Menü, was ihn
+  beendet. Ein App-Start beendet ihn von selbst.
 - Abgefragt wird ab Werk jede Minute. Ein schlafendes Apple TV beantwortet
   die Abfrage, ohne aufzuwachen.
 

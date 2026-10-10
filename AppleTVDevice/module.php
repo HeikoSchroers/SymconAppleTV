@@ -30,6 +30,7 @@ class AppleTVDevice extends IPSModule
     // HID-Tasten (pyatv HidCommand)
     private const HID_SLEEP = 12;
     private const HID_WAKE = 13;
+    private const HID_MENU = 5;
 
     // FetchAttentionState (pyatv SystemStatus)
     private const ZUSTAND = [0 => 'unbekannt', 1 => 'Ruhezustand', 2 => 'Bildschirmschoner', 3 => 'wach', 4 => 'untätig'];
@@ -157,10 +158,21 @@ class AppleTVDevice extends IPSModule
         return $zustand;
     }
 
-    /** Aufwecken. */
+    /**
+     * Aufwecken. Ein laufender Bildschirmschoner endet dabei: Wake allein
+     * laesst ihn stehen, Menue beendet ihn (am Geraet geprueft 10.10.2026).
+     */
     public function PowerOn(): bool
     {
-        $ok = $this->ausfuehren(fn (Connection $c) => $c->command('_hidC', ['_hBtS' => 2, '_hidC' => self::HID_WAKE])) !== null;
+        $ok = $this->ausfuehren(function (Connection $c) {
+            $c->command('_hidC', ['_hBtS' => 2, '_hidC' => self::HID_WAKE]);
+            if ((int) ($c->command('FetchAttentionState')['state'] ?? 0) == 2) {
+                $this->SendDebug('PowerOn', 'Bildschirmschoner läuft, sende Menü', 0);
+                $c->command('_hidC', ['_hBtS' => 1, '_hidC' => self::HID_MENU]);
+                $c->command('_hidC', ['_hBtS' => 2, '_hidC' => self::HID_MENU]);
+            }
+            return true;
+        }) !== null;
         if ($ok) {
             $this->SetValue('POWER', true);
             $this->SetValue('STATUS', 3);
@@ -182,7 +194,8 @@ class AppleTVDevice extends IPSModule
     }
 
     /**
-     * App starten (weckt das Apple TV vorher). $Bundle ist die App-Kennung,
+     * App starten (weckt das Apple TV vorher; ein Bildschirmschoner endet mit
+     * dem Start von selbst). $Bundle ist die App-Kennung,
      * z. B. com.netflix.Netflix, oder eine URL (z. B. https://...).
      */
     public function LaunchApp(string $Bundle): bool
