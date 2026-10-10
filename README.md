@@ -10,7 +10,8 @@ Das Modul kann:
 - das Apple TV aufwecken und in den Ruhezustand schicken
 - den Zustand abfragen (Ruhezustand, Bildschirmschoner, wach)
 - Apps starten, als Auswahl oder als eigener Schalter je App, z. B. für die
-  HomeKit-Bridge und Apple Kurzbefehle
+  Visualisierung, die HomeKit-Bridge und Apple Kurzbefehle; die Schalter legt
+  das Modul selbst an und hält sie aktuell
 - Tasten der Siri Remote und Wiedergabebefehle senden
 
 ## Voraussetzungen
@@ -35,8 +36,10 @@ auch von Hand eintragen.
    Fernseher zeigt eine vierstellige PIN.
 4. Die PIN eintragen und **PIN senden** klicken (2 Minuten Zeit). Die Zeile
    darüber meldet „Gekoppelt am …, n Apps“ oder den Fehler.
-5. Optional unter **App-Schalter** die Apps ankreuzen, die einen eigenen
-   Schalter bekommen sollen, und **Änderungen übernehmen**.
+5. Unter **App-Schalter** ist ab Werk **Schalter für jede installierte App**
+   an: Jede App bekommt einen Schalter. Wer nur einzelne will, schaltet die
+   Option aus, kreuzt die Apps in der Liste an und klickt **Änderungen
+   übernehmen**.
 
 **Adresse:** Antwortet die eingetragene Adresse nicht, etwa nach einem
 DHCP-Wechsel, sucht die Instanz das Apple TV über den Gerätenamen per mDNS.
@@ -65,11 +68,26 @@ ab. Die Instanz meldet dann „Kopplung abgelehnt – neu koppeln“.
 | Eingeschaltet | Schalter | Ein weckt das Apple TV, Aus schickt es in den Ruhezustand |
 | Zustand | Auswahl | unbekannt, Ruhezustand, Bildschirmschoner, wach, untätig |
 | App | Auswahl | installierte Apps; die Auswahl startet die App |
-| je angekreuzter App | Schalter | Ein startet die App, Aus schickt das Apple TV in den Ruhezustand |
+| je App (bzw. je angekreuzter App) | Schalter | Ein startet die App, Aus schickt das Apple TV in den Ruhezustand |
 
-Die Auswahl der Variable **App** baut das Modul aus der App-Liste des
-Geräts. Neu installierte Apps erscheinen nach **App-Liste neu laden** im
-Formular oder nach `ATV_GetApps($id)`.
+Die Auswahl der Variable **App** und die App-Schalter baut das Modul aus der
+App-Liste des Geräts. Die Liste holt es beim Koppeln, bei **App-Liste neu
+laden** im Formular, bei `ATV_GetApps($id)` und von selbst alle 6 Stunden
+(**App-Liste neu laden alle**). Das geschieht aber nur, wenn das Apple TV
+gerade wach ist oder den Bildschirmschoner zeigt. Ein schlafendes Gerät wird
+dafür nicht geweckt, sonst schaltete es über HDMI-CEC nachts den Fernseher
+ein.
+
+- **Neue App:** Sie bekommt einen eigenen Schalter.
+- **Gelöschte App:** Ihr Schalter wird versteckt, nicht gelöscht. Links und
+  Einträge in der HomeKit-Bridge zeigen so nicht ins Leere. Kommt die App
+  wieder, erscheint der Schalter wieder. Einen Schalter, den jemand von Hand
+  versteckt hat, zeigt das Modul nicht wieder an.
+- **Abgewählt:** Gelöscht wird ein Schalter nur, wenn man ihn im Formular
+  abwählt, solange die App installiert ist.
+
+Die Kennung der Schalter-Variable (`APP_` und eine Prüfsumme der App-Kennung)
+hängt nur an der App. Sie bleibt also auch beim Umbenennen gleich.
 
 Die App-Schalter schalten sich gegenseitig aus: Startet eine App, geht ihr
 Schalter an und alle anderen aus. Damit taugen sie für die HomeKit-Bridge,
@@ -87,7 +105,7 @@ Apple TV in den Ruhezustand, setzt die Abfrage beides zurück.
 | `ATV_PowerOff($id)` | Ruhezustand |
 | `ATV_GetState($id)` | 1 Ruhezustand, 2 Bildschirmschoner, 3 wach, 4 untätig, 0 unbekannt |
 | `ATV_LaunchApp($id, 'com.netflix.Netflix')` | App starten (weckt vorher); eine URL öffnet einen Link |
-| `ATV_GetApps($id)` | installierte Apps als Kennung => Name |
+| `ATV_GetApps($id)` | installierte Apps als Kennung => Name; legt Schalter für neue Apps an |
 | `ATV_GetKnownApps($id)` | zuletzt geholte App-Liste, ohne Verbindung zum Apple TV |
 | `ATV_SendKey($id, $Taste)` | Taste drücken: 1–4 Hoch/Runter/Links/Rechts, 5 Menü, 6 OK, 7 TV, 8/9 Lauter/Leiser, 14 Wiedergabe/Pause |
 | `ATV_MediaCommand($id, $Befehl)` | 1 Play, 2 Pause, 3 nächster, 4 voriger Titel |

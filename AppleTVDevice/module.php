@@ -50,11 +50,15 @@ class AppleTVDevice extends IPSModule
         $this->RegisterPropertyString('ClientName', 'Symcon');
         $this->RegisterPropertyInteger('Interval', 60);
         $this->RegisterPropertyString('AppSwitches', '[]');
+        $this->RegisterPropertyBoolean('AllAppSwitches', true);
+        $this->RegisterPropertyInteger('AppListInterval', 6);
 
         $this->RegisterAttributeString('Pairing', '');
         $this->RegisterAttributeString('Apps', '{}');
         $this->RegisterAttributeString('FoundAddress', '');
         $this->RegisterAttributeString('PairingInfo', '');
+        $this->RegisterAttributeInteger('AppsFetched', 0);
+        $this->RegisterAttributeString('GoneSwitches', '{}');
 
         $this->RegisterTimer('Update', 0, 'ATV_Update($_IPS[\'TARGET\']);');
     }
@@ -97,7 +101,7 @@ class AppleTVDevice extends IPSModule
                 $this->PowerOff();
                 return;
             }
-            foreach ($this->apps() as $bundle => $name) {
+            foreach ($this->schalterSoll() as $bundle => $name) {
                 if (self::schalterIdent($bundle) === $Ident) {
                     $this->LaunchApp($bundle);
                     return;
@@ -128,11 +132,21 @@ class AppleTVDevice extends IPSModule
 
     // ===================== Oeffentliche Funktionen =====================
 
-    /** Zustand abfragen und die Variablen setzen. */
+    /**
+     * Zustand abfragen und die Variablen setzen. Ist das Apple TV wach und
+     * die App-Liste aelter als "App-Liste neu laden alle", holt es sie neu.
+     * Ein schlafendes Apple TV wird dafuer nicht geweckt, sonst schaltete es
+     * ueber HDMI-CEC nachts den Fernseher ein.
+     */
     public function Update(): bool
     {
         // Ohne Warnung: Der Zeitgeber soll ein ausgeschaltetes Netz nicht ins Log schreiben
-        return $this->zustandHolen(false) > 0;
+        $zustand = $this->zustandHolen(false);
+        $stunden = $this->ReadPropertyInteger('AppListInterval');
+        if ($zustand > 1 && $stunden > 0 && time() - $this->ReadAttributeInteger('AppsFetched') >= $stunden * 3600) {
+            $this->appsHolen(false);
+        }
+        return $zustand > 0;
     }
 
     /**
@@ -220,13 +234,23 @@ class AppleTVDevice extends IPSModule
      */
     public function GetApps(): array
     {
-        $apps = $this->ausfuehren(fn (Connection $c) => $c->command('FetchLaunchableApplicationsEvent'));
+        return $this->appsHolen(true);
+    }
+
+    private function appsHolen(bool $warnen): array
+    {
+        $apps = $this->ausfuehren(fn (Connection $c) => $c->command('FetchLaunchableApplicationsEvent'), $warnen);
         if ($apps === null) {
             return [];
         }
         $apps = array_filter($apps, 'is_string');
         asort($apps, SORT_NATURAL | SORT_FLAG_CASE);
-        $this->WriteAttributeString('Apps', json_encode($apps, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $this->WriteAttributeInteger('AppsFetched', time());
+        $neu = json_encode($apps, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($neu !== $this->ReadAttributeString('Apps')) {
+            $this->SendDebug('Apps', count($apps) . ' Apps, Liste geändert', 0);
+        }
+        $this->WriteAttributeString('Apps', $neu);
 
         // Die Liste im Formular haengt an der Eigenschaft: neue Apps dort
         // ergaenzen, die Haken bleiben erhalten.
@@ -455,24 +479,78 @@ class AppleTVDevice extends IPSModule
         $this->RegisterVariableString('APP', 'App', self::pAufz($optionen, 'Menu'), 3);
         $this->EnableAction('APP');
 
-        // Schalter je angekreuzter App, z. B. fuer die HomeKit-Bridge
+        // Schalter je App, z. B. fuer die HomeKit-Bridge. Ist eine App nicht
+        // mehr installiert, wird ihr Schalter nur versteckt: Links und
+        // HomeKit-Eintraege darauf sollen nicht ins Leere zeigen. Kommt sie
+        // wieder, erscheint er wieder.
+        $apps = $this->apps();
+        $versteckt = json_decode($this->ReadAttributeString('GoneSwitches'), true) ?: [];
         $soll = [];
         $pos = 10;
-        foreach (json_decode($this->ReadPropertyString('AppSwitches'), true) ?: [] as $zeile) {
-            if (empty($zeile['Switch']) || ($zeile['Bundle'] ?? '') === '') {
-                continue;
-            }
-            $ident = self::schalterIdent($zeile['Bundle']);
+        foreach ($this->schalterSoll() as $bundle => $name) {
+            $ident = self::schalterIdent($bundle);
             $soll[$ident] = true;
-            $this->RegisterVariableBoolean($ident, $zeile['Name'] ?: $zeile['Bundle'], self::pSchalter('Tv'), $pos++);
+            $this->RegisterVariableBoolean($ident, $name, self::pSchalter('Tv'), $pos++);
             $this->EnableAction($ident);
+            $this->verstecken($ident, !isset($apps[$bundle]), $versteckt);
+        }
+        $installiert = [];
+        foreach ($apps as $bundle => $name) {
+            $installiert[self::schalterIdent($bundle)] = true;
         }
         foreach (IPS_GetChildrenIDs($this->InstanceID) as $id) {
             $ident = IPS_GetObject($id)['ObjectIdent'];
-            if (str_starts_with($ident, 'APP_') && !isset($soll[$ident])) {
+            if (!str_starts_with($ident, 'APP_') || isset($soll[$ident])) {
+                continue;
+            }
+            if (isset($installiert[$ident])) {
+                // App ist da, der Schalter wurde abgewaehlt
                 $this->UnregisterVariable($ident);
+                unset($versteckt[$ident]);
+            } else {
+                $this->verstecken($ident, true, $versteckt);
             }
         }
+        $this->WriteAttributeString('GoneSwitches', json_encode($versteckt));
+    }
+
+    /**
+     * Versteckt den Schalter oder zeigt ihn wieder. Wieder gezeigt wird nur,
+     * was das Modul selbst versteckt hat, nicht was jemand von Hand
+     * versteckt hat.
+     */
+    private function verstecken(string $ident, bool $weg, array &$versteckt): void
+    {
+        $id = @$this->GetIDForIdent($ident);
+        if ($id <= 0) {
+            return;
+        }
+        if ($weg && !IPS_GetObject($id)['ObjectIsHidden']) {
+            IPS_SetHidden($id, true);
+            $versteckt[$ident] = true;
+            $this->SendDebug('Schalter', IPS_GetName($id) . ' versteckt (App nicht mehr installiert)', 0);
+        } elseif (!$weg && isset($versteckt[$ident])) {
+            IPS_SetHidden($id, false);
+            unset($versteckt[$ident]);
+            $this->SendDebug('Schalter', IPS_GetName($id) . ' wieder gezeigt', 0);
+        }
+    }
+
+    /**
+     * Apps mit Schalter (Kennung => Name), nach Name sortiert: alle
+     * installierten, wenn "Schalter fuer jede App" an ist, dazu die
+     * angekreuzten.
+     */
+    private function schalterSoll(): array
+    {
+        $soll = $this->ReadPropertyBoolean('AllAppSwitches') ? $this->apps() : [];
+        foreach (json_decode($this->ReadPropertyString('AppSwitches'), true) ?: [] as $zeile) {
+            if (!empty($zeile['Switch']) && ($zeile['Bundle'] ?? '') !== '' && !isset($soll[$zeile['Bundle']])) {
+                $soll[$zeile['Bundle']] = $zeile['Name'] ?: $zeile['Bundle'];
+            }
+        }
+        asort($soll, SORT_NATURAL | SORT_FLAG_CASE);
+        return $soll;
     }
 
     /** Schalter der gestarteten App an, alle anderen aus. */
