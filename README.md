@@ -88,6 +88,7 @@ Apple TV in den Ruhezustand, setzt die Abfrage beides zurück.
 | `ATV_GetState($id)` | 1 Ruhezustand, 2 Bildschirmschoner, 3 wach, 4 untätig, 0 unbekannt |
 | `ATV_LaunchApp($id, 'com.netflix.Netflix')` | App starten (weckt vorher); eine URL öffnet einen Link |
 | `ATV_GetApps($id)` | installierte Apps als Kennung => Name |
+| `ATV_GetKnownApps($id)` | zuletzt geholte App-Liste, ohne Verbindung zum Apple TV |
 | `ATV_SendKey($id, $Taste)` | Taste drücken: 1–4 Hoch/Runter/Links/Rechts, 5 Menü, 6 OK, 7 TV, 8/9 Lauter/Leiser, 14 Wiedergabe/Pause |
 | `ATV_MediaCommand($id, $Befehl)` | 1 Play, 2 Pause, 3 nächster, 4 voriger Titel |
 | `ATV_Update($id)` | Zustand abfragen und Variablen setzen |

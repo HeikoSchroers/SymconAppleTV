@@ -229,6 +229,15 @@ class AppleTVDevice extends IPSModule
     }
 
     /**
+     * Zuletzt geholte App-Liste (Kennung => Name), ohne Verbindung zum
+     * Apple TV. Fuer Skripte, die die Liste oft brauchen.
+     */
+    public function GetKnownApps(): array
+    {
+        return $this->apps();
+    }
+
+    /**
      * Taste der Siri Remote druecken und loslassen (pyatv HidCommand:
      * 1-4 Hoch/Runter/Links/Rechts, 5 Menue/Zurueck, 6 OK, 7 TV/Home,
      * 8/9 Lauter/Leiser, 14 Wiedergabe/Pause).
