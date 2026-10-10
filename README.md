@@ -5,6 +5,11 @@ Companion-Protokoll, also den Weg der Fernbedienung im iPhone. Es braucht
 keine Cloud, kein MQTT und kein Zusatzgerät, sondern nur PHP auf der
 Symcon-Box.
 
+> 🙏 **Thanks to [Pierre Ståhl](https://github.com/postlund) and
+> [pyatv](https://github.com/postlund/pyatv).** Pierre has been building
+> pyatv since 2017. The Companion protocol layer of this module is a PHP
+> port of his work. Without pyatv, this module would not exist.
+
 Das Modul kann:
 
 - das Apple TV aufwecken und in den Ruhezustand schicken
