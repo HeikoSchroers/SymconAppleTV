@@ -1,0 +1,12 @@
+{
+    "id": "{BD8A8DC2-5417-4A9C-A84A-4E2755200C63}",
+    "name": "SymconAppleTV",
+    "author": "Heiko Schrörs",
+    "url": "https://github.com/HeikoSchroers/SymconAppleTV",
+    "compatibility": {
+        "version": "8.0"
+    },
+    "version": "1.0",
+    "build": 1,
+    "date": 0
+}
