@@ -147,4 +147,4 @@ festen Testwerten gegen die Originalbibliotheken (srptools, pyatv) geprüft.
 
 ## Lizenz
 
-MIT, siehe [LICENSE](LICENSE). Der Lizenztext von pyatv steht dort mit.
+MIT, siehe [LICENSE](LICENSE). Der Lizenztext von pyatv steht in [LICENSE-pyatv](LICENSE-pyatv).
